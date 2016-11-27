@@ -1,17 +1,29 @@
 {
-  "name": "me2-u3_rest_in_node",
-  "version": "0.0.1",
-  "author": "Johannes Konert",
-  "description": "A simple prototypical REST API sceleton for exercises.",
-  "licence": "CC BY-SA 4.0",
-  "private": true,
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js"
-  },
-  "dependencies": {
-    "body-parser": "~1.13.2",
-    "debug": "~2.2.0",
-    "express": "~4.13.1"
-  }
+  "name": "MME2-exercise3",
+    "version": "1.0.0",
+    "description": "Third exercise for MME2 from WiSe16/17",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": {
+        "MME2",
+        "Beuth",
+        "exercise",
+    },
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/RobbieTheRabbit/MME2_uebung3.git"
+    },
+    "author": "Die Verplanten - Timo, Oliver and Sven",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/RobbieTheRabbit/MME2_uebung3/issues"
+    },
+    "homepage": "https://github.com/RobbieTheRabbit/MME2_uebung3#readme",
+    "dependencies": {
+		"body-parser": "~1.13.2",
+		"debug": "~2.2.0",
+		"express": "~4.13.1"
+	  }
 }

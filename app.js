@@ -66,36 +66,97 @@ app.use(function(req, res, next) {
 
 // Routes ***************************************
 
-app.get('/tweets', function(req,res,next) {
-    res.json(store.select('tweets'));
+app.get('/tweets', function (req, res, next) {
+    var tweets = store.select('tweets');
+    addHrefToTweets(tweets);
+    res.json(tweets);
 });
 
-app.post('/tweets', function(req,res,next) {
-    var id = store.insert('tweets', req.body); 
+app.post('/tweets', function (req, res, next) {
+    var id = store.insert('tweets', req.body);
     // set code 201 "created" and send the item back
-    res.status(201).json(store.select('tweets', id));
+    var tweets = store.select('tweets', id);
+    addHrefToTweets([tweets]);
+    res.status(201).json(tweets);
 });
 
 
-app.get('/tweets/:id', function(req,res,next) {
-    res.json(store.select('tweets', req.params.id));
+app.get('/tweets/:id', function (req, res, next) {
+    var tweets = store.select('tweets', req.params.id);
+    addHrefToTweets([tweets]);
+    res.json(tweets);
 });
 
-app.delete('/tweets/:id', function(req,res,next) {
+app.delete('/tweets/:id', function (req, res, next) {
     store.remove('tweets', req.params.id);
     res.status(200).end();
 });
 
-app.put('/tweets/:id', function(req,res,next) {
+app.put('/tweets/:id', function (req, res, next) {
     store.replace('tweets', req.params.id, req.body);
+    addHrefToTweets([store.select('tweets', req.params.id)]);
     res.status(200).end();
 });
 
 
+
 // TODO: add your routes etc.
+app.get('/users', function (req, res, next) {
+    var users = store.select('users');
+    addHrefToUsers(users);
+    res.json(users);
+});
 
+app.post('/users', function (req, res, next) {
+    var id = store.insert('users', req.body);
+    // set code 201 "created" and send the item back
+    var user = store.select('users', id);
+    addHrefToUsers([user]);
+    res.status(201).json(user);
+});
 
-// CatchAll for the rest (unfound routes/resources) ********
+app.get('/users/:id', function (req, res, next) {
+    var user = store.select('users', req.params.id);
+    if(req.query.expand === 'tweets') {
+        var tweets = store.select('tweets');
+        var userTweets = [];
+        for (var i = 0; i < tweets.length; i++) {
+            if (tweets[i].creator.id == req.params.id) {
+                userTweets.push(tweets[i]);
+            }
+        }
+        user.tweets = userTweets;
+    } else {
+        addHrefToUsers([user]);
+    }
+    res.json(user);
+});
+
+app.delete('/users/:id', function (req, res, next) {
+    store.remove('users', req.params.id);
+    res.status(200).end();
+});
+
+app.put('/users/:id', function (req, res, next) {
+    store.replace('users', req.params.id, req.body);
+    addHrefToUsers([store.select('users', req.params.id)]);
+    res.status(200).end();
+});
+
+app.get('/users/:id/tweets', function (req, res, next) {
+    var id = req.params.id;
+    var tweets = store.select('tweets');
+    var userTweets = [];
+    for (var i = 0; i < tweets.length; i++) {
+        if (tweets[i].creator.id == id) {
+            userTweets.push(tweets[i]);
+        }
+    }
+    addHrefToTweets(userTweets);
+    res.json(userTweets);
+});
+
+// CatchAll for the rest (unfound routes/resources ********
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -143,3 +204,30 @@ app.listen(3000, function(err) {
         console.log('Listening on port 3000');
     }
 });
+
+/**
+ * Adds a href to every tweet, which contains the address of the user who wrote the tweet.
+ *
+ * @param tweets must be an array containing all the tweets who should get and href added.
+ */
+function addHrefToTweets(tweets) {
+    for (var i = 0; i < tweets.length; i++) {
+        console.log('href?', tweets[i].creator.href);
+        tweets[i].creator.href = 'http://localhost:3000/users/' + tweets[i].creator.id;
+    }
+}
+
+/**
+ * Adds a href to every user, which contains the address of the tweet the user wrote.
+ *
+ * @param users must be an array containing all the users who should get and href added.
+ */
+function addHrefToUsers(users) {
+    for (var i = 0; i < users.length; i++) {
+        if (users[i].href === undefined) {
+            users[i].href = new Object();
+        }
+        console.log('Generating HATEOS href...');
+        users[i].href.tweets = 'http://localhost:3000/users/' + users[i].id + '/tweets';
+    }
+}

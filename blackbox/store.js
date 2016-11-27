@@ -6,13 +6,17 @@
  *  - replace (String type, Number id, Object element) [@returns this (the store object)]
  *  - remove (String type, Number id) [@returns this (the store object)]
  *
- *  All methods make deep copies of the data objects (and remove functions)
  *  All methods throw Errors if something went wrong.
  *  Elements stored in store are expected to have an .id property with a numeric value > 0 (except on insert(..))
+ *
+ *
+ *  WARNING: DO NOT solve task 2 of your exercise by adding hard-coded href:-attributes in this file here!
+ *
+ *  
  * @author Johannes Konert
  * @licence  CC BY-SA 4.0
  *
- * @throws Error in methods if something went wrong
+ * @fires Error in methods if something went wrong
  * @module blackbox/store
  * @type {Object}
  */
@@ -32,13 +36,15 @@ var tweets = [
     {   id: globalCounter(),
         message: "Hello world tweet",
         creator: {
-            href: "http://localhost:3000/users/103"
+            id: 103,
+            //href: "http://localhost:3000/users/103"
         }
     },
     {   id: globalCounter(),
         message: "Another nice tweet",
         creator: {
-            href: "http://localhost:3000/users/104"
+            id: 104,
+            //href: "http://localhost:3000/users/104"
         }
     }
 ];
@@ -58,27 +64,11 @@ var memory = {};
 memory.tweets = tweets;
 memory.users = users;
 
-//** private helper functions */
-/**
- *  Checks given element for being an object
- * @param element
- * @throws Error if not an object
- */
+// private helper functions
 var checkElement = function(element) {
     if (typeof(element) !== 'object') {
         throw new Error('Element is not an object to store', element);
     }
-};
-
-/**
- * Returns a deep clone of object attributes (no functions)
- * Uses JSON.stringify for this.
- * @param object to copy
- * @returns {object}
- */
-var getDeepObjectCopy = function(object) {
-    if (!object) return undefined;
-    return JSON.parse(JSON.stringify(object)); // quick&dirty solution to deep copy a data object (without functions!)
 };
 
 var store = {
@@ -93,21 +83,20 @@ var store = {
     select: function(type, id) {
         var list = memory[type];
         id = parseInt(id);
-        list =  (list == undefined || list.length === 0)? undefined: list; // prevent []
         if (list != undefined && list.length > 0 && !isNaN(id)) {
             list = list.filter(function(element) {
                 return element.id === id;
             });
             list =  (list.length === 0)? undefined: list[0]; // only return the 1 found element; prevent empty []
         }
-        return getDeepObjectCopy(list); // may contain undefined, object or array;
+        return list; // may contain undefined, object or array;
     },
 
 
-    /** Inserts an element into the list of type and adds an .id to it
+    /** Inserts an element into the list of type
      *
      * @param {string} type
-     * @param {object} element (without an .id property)
+     * @param {object} element
      * @returns {Number} the new id of the inserted element as a Number
      */
     insert: function(type, element) {
@@ -117,7 +106,7 @@ var store = {
         }
         element.id = globalCounter();
         memory[type] = memory[type] || [];
-        memory[type].push(getDeepObjectCopy(element));
+        memory[type].push(element);
         return element.id;
     },
 
@@ -127,7 +116,6 @@ var store = {
      * @param {string} type
      * @param {string} id
      * @param {object} newElement  needs to have .id property of same value as id
-     * @throws Error in case element cannot be found or id and .id are not the same
      * @returns {this} the store object itself for pipelining
      */
     replace: function(type, id, newElement) {
@@ -144,12 +132,12 @@ var store = {
                 index = i;
             }
         });
-        // case of index = null cannot happen as it was found before..
+        newElement.id = id; // for type safety
+        // case of index = null cannot happen as it was found before, but...
         if (!newElement.id == id) {
             throw new Error("element.id and given id are not identical! Cannot replace");
         }
-        newElement.id = id; // for type safety
-        memory[type][index] = getDeepObjectCopy(newElement);
+        memory[type][index] = newElement;
         return this;
     },
 
@@ -158,7 +146,6 @@ var store = {
      *
      * @param {string} type
      * @param {Number} id numerical id of element to remove
-     * @throws Error if element cannot be found in store
      * @returns {this} store object itself for pipelining
      */
     remove: function(type, id) {
